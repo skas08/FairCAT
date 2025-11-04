@@ -334,14 +334,14 @@ def attribute_generation(n,d,k,U,V,C,omega,att_type):
 
 ####### BINARY–CONTINUOUS CORRELATION ADJUSTMENT ##############
 
-def _solve_alpha_for_target_corr(x, s, r_star): 
+def _solve_alpha_for_target_corr(x, s, phi_star): 
     """
-    Find alpha such that corr(x', s) = r_star, where x' = x + alpha*sc
+    Find alpha such that corr(x', s) = phi_star, where x' = x + alpha*sc
     
     Parameters:
     - x: original continuous non-sensitive attribute values
     - s: sensitive attribute values
-    - r_star: target correlation
+    - phi_star: target correlation
 
     Returns:
     - alpha: the value to adjust x by
@@ -358,9 +358,9 @@ def _solve_alpha_for_target_corr(x, s, r_star):
 
     # quadratic formula: A*alpha^2 + B*alpha + C = 0
 
-    A = (r_star**2-1) * (var_s**2)
-    B = 2 * (r_star**2-1) * cov_xs * var_s
-    C = (r_star**2) * var_x * var_s - cov_xs**2
+    A = (phi_star**2-1) * (var_s**2)
+    B = 2 * (phi_star**2-1) * cov_xs * var_s
+    C = (phi_star**2) * var_x * var_s - cov_xs**2
 
     roots = np.roots([A, B, C]) if abs(A) > 1e-18 else [-C/B]  # linear fallback
     # Choose the root that yields the closer correlation
@@ -375,7 +375,7 @@ def _solve_alpha_for_target_corr(x, s, r_star):
         if den <= 0: # avoid division by zero and invalid values
             continue
         phi = num / den 
-        err = abs(phi - r_star)
+        err = abs(phi - phi_star)
         if err < best_err:
             best_err = err
             best_alpha = a
