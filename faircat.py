@@ -456,7 +456,6 @@ def _phi_feasible_interval(pi, p):
     scale = np.sqrt(pi * (1.0 - pi)) / np.sqrt(max(p*(1.0 - p), 1e-18))
     return lo * scale, hi * scale
 
-import numpy as np
 
 
 
@@ -476,13 +475,13 @@ def flip_min_to_match_rate(x_bin, target_rate, probs_col, idxs):
     """
     x = np.asarray(x_bin, int).ravel().copy()
     p = probs_col
-    n = x.size
-    if p.size != n:
-        print(p.size,n)
+    num = x.size
+    if p.size != num:
+        print(p.size,num)
         raise ValueError("`probs` must have same length as `x_bin`.")
     p = np.clip(p, 1e-12, 1-1e-12) # to avoid numerical issues
 
-    want_ones = int(round(target_rate * n))
+    want_ones = int(round(target_rate * num))
     have_ones = int(x.sum())
     diff = want_ones - have_ones
     if diff == 0:
@@ -490,7 +489,7 @@ def flip_min_to_match_rate(x_bin, target_rate, probs_col, idxs):
 
 
     idxs = np.asarray(idxs).ravel()
-    if idxs.size != n:
+    if idxs.size != num:
         raise ValueError("`idxs` must have same length as `x_bin`.")
 
 
