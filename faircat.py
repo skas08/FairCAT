@@ -91,6 +91,7 @@ def prepare_theta_and_indices(theta_0, theta_1):
     sorted_indices = np.argsort(-theta_combined) # O(n log n) sort in descending order
     sorted_theta = theta_combined[sorted_indices]
     sorted_attr_group = np.array(attr_labels)[sorted_indices]
+    
     return sorted_theta.tolist(), sorted_attr_group.tolist()
 
 
@@ -162,9 +163,13 @@ def latent_factor_gen_from_C(C,n,k,M,D):
     one_list = np.where(U > 1)
     for i in range(len(one_list[0])):
         U[one_list[0][i],one_list[1][i]] = 1
-    # normalize
+    # normalize with guard against zero/NaN rows
     for i in range(n):
-        U[i] /= sum(U[i])
+        row_sum = np.sum(U[i])
+        if row_sum > 0 and np.isfinite(row_sum):
+            U[i] /= row_sum
+        else:
+            U[i] = np.ones(k) / k
 
     return U,density
 
@@ -183,11 +188,22 @@ def adjust(n,k,U,C,M):
         
     # Freezing function
     def freez_func(q,Th):
-        return q**(1/Th) / np.sum(q**(1/Th))
+        q = np.asarray(q, dtype=float)
+        q = np.clip(q, 0.0, 1.0)
+        denom = np.sum(q**(1/Th))
+        if denom == 0 or not np.isfinite(denom):
+            return np.ones_like(q)/len(q)
+        return (q**(1/Th)) / denom
     
     def inverse(U_tmp,l):
         U_ = 1 - U_tmp
-        sum_U_ = sum(U_) - U_tmp[l]
+        sum_U_ = np.sum(U_) - U_tmp[l]
+        if sum_U_ <= 0 or not np.isfinite(sum_U_):
+            # distribute mass uniformly among non-l indices to avoid division by zero/NaN
+            for i in range(k):
+                if i != l:
+                    U_[i] = U_tmp[l] / (k - 1) if k > 1 else 0.0
+            return U_
         for i in range(k):
             if i != l:
                 U_[i] = U_[i] * U_tmp[l] / sum_U_
@@ -195,13 +211,17 @@ def adjust(n,k,U,C,M):
     flag=0
     for l in range(k):
         loss_min = float('inf')
+        if len(partition[l]) == 0:
+            continue
+        Th_min = 1.0
         if  M[l][l] >= 1/k:
             for Th in np.arange(0.01,1,0.05):
                 sum_estimated = np.zeros(k)
                 for i in partition[l]:
-                    sum_estimated += freez_func(U[i],Th) * freez_func(U[i],Th)
+                    f = freez_func(U[i],Th)
+                    sum_estimated += f * f
                 loss_tmp = la.norm(M[l]-sum_estimated/len(partition[l]))
-                if loss_tmp < loss_min:
+                if np.isfinite(loss_tmp) and loss_tmp < loss_min:
                     loss_min = loss_tmp
                     Th_min = Th
             for i in partition[l]:
@@ -211,9 +231,11 @@ def adjust(n,k,U,C,M):
             for Th in np.arange(0.01,1,0.05):
                 sum_estimated = np.zeros(k)
                 for i in partition[l]:
-                    sum_estimated += freez_func(U[i],Th) * inverse(freez_func(U[i],Th),l)
+                    f = freez_func(U[i],Th)
+                    inv = inverse(f,l)
+                    sum_estimated += f * inv
                 loss_tmp = la.norm(M[l]-sum_estimated/len(partition[l]))
-                if loss_tmp < loss_min:
+                if np.isfinite(loss_tmp) and loss_tmp < loss_min:
                     loss_min = loss_tmp
                     Th_min = Th
             for i in partition[l]:
@@ -362,7 +384,7 @@ def _solve_alpha_for_target_corr(x, s, phi_star):
     B = 2 * (phi_star**2-1) * cov_xs * var_s
     C = (phi_star**2) * var_x * var_s - cov_xs**2
 
-    roots = np.roots([A, B, C]) if abs(A) > 1e-18 else [-C/B]  # linear fallback
+    roots = np.roots([A, B, C]) if abs(A) > 1e-18 else [-C/B]  # to not divide by zero
     # Choose the root that yields the closer correlation
     best_alpha = None; best_err = float("inf")
     for a in roots:
@@ -398,6 +420,14 @@ def adjust_feature_to_corr_cont(x, s, r_target):
 
     alpha = _solve_alpha_for_target_corr(x, s, r_target)
     x_new = xc + alpha * sc + x.mean()
+    if x_new.min() < 0 or x_new.max() > 1:
+        # re-scale to [0,1]
+        print("Rescaling adjusted continuous attribute to [0,1]")
+        x_new -= x_new.min() # eg. 1.2-(-0.3) = 1.5 or -0.3-(-0.3)=0.0
+        if x_new.max() > 0:
+            x_new /= x_new.max() # eg. 1.5/1.5 = 1.0
+        else:
+            x_new = np.zeros_like(x_new) # all values are zero
 
     return x_new
 
@@ -611,6 +641,7 @@ def faircat(n_0, n_1,deg_0, deg_1,k,d,max_deg_0, max_deg_1,dist_type_0, dist_typ
     theta, sorted_attr_group = prepare_theta_and_indices(theta_0, theta_1)
     n=n_0+n_1
 
+
     # class generation
     C = generate_classes_from_group(k, np.array(sorted_attr_group).astype(int), Pcg)
     # latent factor U generation
@@ -647,4 +678,39 @@ def faircat(n_0, n_1,deg_0, deg_1,k,d,max_deg_0, max_deg_1,dist_type_0, dist_typ
                 X, s, corr_targets,
                 attr_type=att_type, X_keep=X_keep  
             )
-    return S_gen,X,C
+    return S_gen,X,C #, theta, sorted_attr_group
+
+
+######### Class reproduction function ########################
+# taken from GenCAT
+def class_reproduction(k,S,Label):
+    # extract class preference matrix from given graph
+    pref = np.zeros((len(Label),k))
+    nnz = S.nonzero()
+    for i in range(len(nnz[0])):
+        if nnz[0][i] < nnz[1][i]:
+            pref[nnz[0][i]][Label[nnz[1][i]]] += 1
+            pref[nnz[1][i]][Label[nnz[0][i]]] += 1
+    for i in range(len(Label)):
+        pref[i] /= sum(pref[i])
+
+    partition = []
+    for i in range(k):
+        partition.append([])
+    for i in range(len(Label)):
+        partition[Label[i]].append(i)
+        
+    # caluculate average and deviation of class preference
+    from statistics import mean, median,variance,stdev
+    M = np.zeros((k,k))
+    D = np.zeros((k,k))
+    for i in range(k):
+        pref_tmp = []
+        for j in partition[i]:
+            pref_tmp.append(pref[j])
+        pref_tmp = np.array(pref_tmp).transpose()
+        for h in range(k):
+            M[i,h] = mean(pref_tmp[h])
+            D[i,h] = stdev(pref_tmp[h])
+    
+    return M,D
