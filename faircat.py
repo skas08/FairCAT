@@ -543,8 +543,12 @@ def adjust_feature_to_corr_phi(x_bin, s_bin, phi_target, probs_col):
 
     # Feasibility of requested phi
     lo_phi, hi_phi = _phi_feasible_interval(pi, p)
-    if phi_target < lo_phi or phi_target > hi_phi:
-        raise ValueError(f"Target phi {phi_target} infeasible; must be in [{lo_phi:.3f}, {hi_phi:.3f}] for given marginals.")
+    if phi_target < lo_phi:
+        phi_target = lo_phi
+        print(f"Warning: Target phi too low; adjusted to feasible minimum {lo_phi:.3f}.")
+    elif phi_target > hi_phi:
+        phi_target = hi_phi
+        print(f"Warning: Target phi too high; adjusted to feasible maximum {hi_phi:.3f}.")
 
     # Map target phi → group gap delta = p1 - p0
     # delta = phi * sqrt(p(1-p)) / sqrt(π(1-π))
