@@ -563,8 +563,6 @@ def adjust_columns_to_corr(X, s, corr_spec, attr_type,X_keep):
             raise KeyError(f"corr_spec key {j} out of range 0..{d-1}")
 
         r_tgt = float(r_tgt)
-        # keep a tiny margin to avoid numerical issues
-        r_tgt = max(min(r_tgt, 0.999), -0.999)
 
         if attr_type == "normal":
             # continuous
