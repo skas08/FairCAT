@@ -91,6 +91,7 @@ def prepare_theta_and_indices(theta_0, theta_1):
     sorted_indices = np.argsort(-theta_combined) # O(n log n) sort in descending order
     sorted_theta = theta_combined[sorted_indices]
     sorted_attr_group = np.array(attr_labels)[sorted_indices]
+    
     return sorted_theta.tolist(), sorted_attr_group.tolist()
 
 
@@ -162,9 +163,13 @@ def latent_factor_gen_from_C(C,n,k,M,D):
     one_list = np.where(U > 1)
     for i in range(len(one_list[0])):
         U[one_list[0][i],one_list[1][i]] = 1
-    # normalize
+    # normalize with guard against zero/NaN rows
     for i in range(n):
-        U[i] /= sum(U[i])
+        row_sum = np.sum(U[i])
+        if row_sum > 0 and np.isfinite(row_sum):
+            U[i] /= row_sum
+        else:
+            U[i] = np.ones(k) / k
 
     return U,density
 
@@ -232,7 +237,6 @@ def edge_construction(n, U, k, U_prime, step, theta, r):
     S = sparse.dok_matrix((n,n))
     degree_list = np.zeros(n)
     count_list = []
-
     print_count = 1
     for i in range(n):
         count = 0
@@ -362,7 +366,7 @@ def _solve_alpha_for_target_corr(x, s, phi_star):
     B = 2 * (phi_star**2-1) * cov_xs * var_s
     C = (phi_star**2) * var_x * var_s - cov_xs**2
 
-    roots = np.roots([A, B, C]) if abs(A) > 1e-18 else [-C/B]  # linear fallback
+    roots = np.roots([A, B, C]) if abs(A) > 1e-18 else [-C/B]  # to not divide by zero
     # Choose the root that yields the closer correlation
     best_alpha = None; best_err = float("inf")
     for a in roots:
@@ -398,6 +402,14 @@ def adjust_feature_to_corr_cont(x, s, r_target):
 
     alpha = _solve_alpha_for_target_corr(x, s, r_target)
     x_new = xc + alpha * sc + x.mean()
+    if x_new.min() < 0 or x_new.max() > 1:
+        # re-scale to [0,1]
+        print("Rescaling adjusted continuous attribute to [0,1]")
+        x_new -= x_new.min() # eg. 1.2-(-0.3) = 1.5 or -0.3-(-0.3)=0.0
+        if x_new.max() > 0:
+            x_new /= x_new.max() # eg. 1.5/1.5 = 1.0
+        else:
+            x_new = np.zeros_like(x_new) # all values are zero
 
     return x_new
 
@@ -422,11 +434,10 @@ def _phi_feasible_interval(pi, p):
              -p/(1.0 - pi)   if pi < 1 else -np.inf)
     hi = min(p/pi           if pi > 0 else  np.inf,
              (1.0 - p)/(1.0 - pi) if pi < 1 else np.inf)
-    # map delta bounds to phi bounds: phi = Delta * sqrt(π(1-π)) / sqrt(p(1-p))
+    # map delta bounds to phi bounds: phi = Delta * sqrt(pi(1-pi)) / sqrt(p(1-p))
     scale = np.sqrt(pi * (1.0 - pi)) / np.sqrt(max(p*(1.0 - p), 1e-18))
     return lo * scale, hi * scale
 
-import numpy as np
 
 
 
@@ -446,13 +457,13 @@ def flip_min_to_match_rate(x_bin, target_rate, probs_col, idxs):
     """
     x = np.asarray(x_bin, int).ravel().copy()
     p = probs_col
-    n = x.size
-    if p.size != n:
-        print(p.size,n)
+    num = x.size
+    if p.size != num:
+        print(p.size,num)
         raise ValueError("`probs` must have same length as `x_bin`.")
     p = np.clip(p, 1e-12, 1-1e-12) # to avoid numerical issues
 
-    want_ones = int(round(target_rate * n))
+    want_ones = int(round(target_rate * num))
     have_ones = int(x.sum())
     diff = want_ones - have_ones
     if diff == 0:
@@ -460,7 +471,7 @@ def flip_min_to_match_rate(x_bin, target_rate, probs_col, idxs):
 
 
     idxs = np.asarray(idxs).ravel()
-    if idxs.size != n:
+    if idxs.size != num:
         raise ValueError("`idxs` must have same length as `x_bin`.")
 
 
@@ -505,22 +516,25 @@ def adjust_feature_to_corr_phi(x_bin, s_bin, phi_target, probs_col):
     if set(np.unique(xb)) - {0,1} or set(np.unique(sb)) - {0,1}:
         raise ValueError("Binary path requires {0,1} inputs.")
 
-    n = len(xb)
-    pi = sb.mean()        # π = P(S=1)
+    pi = sb.mean()        # pi = P(S=1)
     p  = xb.mean()        # p = P(X=1)
     if not (0.0 < pi < 1.0):
         return xb  # no variation in s → nothing to do
 
     # Feasibility of requested phi
     lo_phi, hi_phi = _phi_feasible_interval(pi, p)
-    if phi_target < lo_phi or phi_target > hi_phi:
-        raise ValueError(f"Target phi {phi_target} infeasible; must be in [{lo_phi:.3f}, {hi_phi:.3f}] for given marginals.")
+    if phi_target < lo_phi:
+        phi_target = lo_phi
+        print(f"Warning: Target phi too low; adjusted to feasible minimum {lo_phi:.3f}.")
+    elif phi_target > hi_phi:
+        phi_target = hi_phi
+        print(f"Warning: Target phi too high; adjusted to feasible maximum {hi_phi:.3f}.")
 
     # Map target phi → group gap delta = p1 - p0
-    # delta = phi * sqrt(p(1-p)) / sqrt(π(1-π))
+    # delta = phi * sqrt(p(1-p)) / sqrt(pi(1-pi))
     Delta = phi_target * np.sqrt(max(p*(1.0 - p), 1e-18)) / np.sqrt(pi * (1.0 - pi))
 
-    # mixture constraint: p = (1-π)p0 + π p1 ⇒ p0 = p - πDelta, p1 = p + (1-π)Delta
+    # mixture constraint: p = (1-pi)p0 + pi p1 ⇒ p0 = p - piDelta, p1 = p + (1-pi)Delta
     p0 = p - pi * Delta
     p1 = p + (1.0 - pi) * Delta
 
@@ -599,7 +613,7 @@ def adjust_columns_to_corr(X, s, corr_spec, attr_type,X_keep):
 
 ######### main function ########################
 
-def faircat(n_0, n_1,deg_0, deg_1,k,d,max_deg_0, max_deg_1,dist_type_0, dist_type_1, Pcg, M,D,H,phi_c=1,omega=0.2,r=50,step=100,att_type="bernoulli",norm_sigma_0=None, norm_sigma_1=None, corr_targets=False):
+def faircat(n_0, n_1,deg_0, deg_1,k,d,max_deg_0, max_deg_1,dist_type_0, dist_type_1, Pcg, M,D,H,phi_c=1,omega=0.2,r=50,step=100,att_type="bernoulli",norm_sigma_0=None, norm_sigma_1=None, corr_targets=False, MAPE=False):
     # node degree generation 
     theta_0, theta_1 = node_deg(
     n_0, n_1, deg_0, deg_1, max_deg_0, max_deg_1,
@@ -608,6 +622,7 @@ def faircat(n_0, n_1,deg_0, deg_1,k,d,max_deg_0, max_deg_1,dist_type_0, dist_typ
 
     theta, sorted_attr_group = prepare_theta_and_indices(theta_0, theta_1)
     n=n_0+n_1
+
 
     # class generation
     C = generate_classes_from_group(k, np.array(sorted_attr_group).astype(int), Pcg)
@@ -645,4 +660,42 @@ def faircat(n_0, n_1,deg_0, deg_1,k,d,max_deg_0, max_deg_1,dist_type_0, dist_typ
                 X, s, corr_targets,
                 attr_type=att_type, X_keep=X_keep  
             )
-    return S_gen,X,C
+    if MAPE==True:
+        return S_gen,X,C, theta, sorted_attr_group
+    else:
+        return S_gen,X,C
+
+
+######### Class reproduction function ########################
+# taken from GenCAT
+def class_reproduction(k,S,Label):
+    # extract class preference matrix from given graph
+    pref = np.zeros((len(Label),k))
+    nnz = S.nonzero()
+    for i in range(len(nnz[0])):
+        if nnz[0][i] < nnz[1][i]:
+            pref[nnz[0][i]][Label[nnz[1][i]]] += 1
+            pref[nnz[1][i]][Label[nnz[0][i]]] += 1
+    for i in range(len(Label)):
+        pref[i] /= sum(pref[i])
+
+    partition = []
+    for i in range(k):
+        partition.append([])
+    for i in range(len(Label)):
+        partition[Label[i]].append(i)
+        
+    # caluculate average and deviation of class preference
+    from statistics import mean, median,variance,stdev
+    M = np.zeros((k,k))
+    D = np.zeros((k,k))
+    for i in range(k):
+        pref_tmp = []
+        for j in partition[i]:
+            pref_tmp.append(pref[j])
+        pref_tmp = np.array(pref_tmp).transpose()
+        for h in range(k):
+            M[i,h] = mean(pref_tmp[h])
+            D[i,h] = stdev(pref_tmp[h])
+    
+    return M,D
