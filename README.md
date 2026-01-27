@@ -1,1 +1,1 @@
-### FairCAT: A Graph Generator for Benchmarking Fairness-Aware Graph Neural Networks
+# FairCAT: A Graph Generator for Benchmarking Fairness-Aware Graph Neural Networks
