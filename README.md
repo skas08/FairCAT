@@ -23,4 +23,4 @@ The repository includes the FairCAT model and demo, which shows an example graph
 
 "Experiments" folder includes code for the experiments. The aim of these experiments is to assess the ability of FairCAT to reproduce user-specified degree distributions and attribute correlations, inspect how user inputs affect generation and output, evaluate scalability, and analyze reproducibility of real-world graphs.
 
-"Benchmarking-datasets" includes code for generating datasets for benchmarking GNNs and the generated datasets.
+"Benchmarking-datasets" includes code for generating datasets for benchmarking GNNs, generated FairCAT datasets that mimic real-life datasets, and examples of slurm files used in HPC for training GNNs.
