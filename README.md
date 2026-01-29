@@ -24,3 +24,5 @@ The repository includes the FairCAT model and demo, which shows an example graph
 "Experiments" folder includes code for the experiments. The aim of these experiments is to assess the ability of FairCAT to reproduce user-specified degree distributions and attribute correlations, inspect how user inputs affect generation and output, evaluate scalability, and analyze reproducibility of real-world graphs.
 
 "Benchmarking-datasets" includes code for generating datasets for benchmarking GNNs, generated FairCAT datasets that mimic real-life datasets, and examples of slurm files used in HPC for training GNNs.
+
+All datasets that are used for benchmarking GNNs can be found on: Skardova, S. (2026). FairCAT-generated datasets for benchmarking fairness-aware GNNs [Data set]. Zenodo. https://doi.org/10.5281/zenodo.18421539.
