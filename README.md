@@ -25,4 +25,70 @@ The repository includes the FairCAT model and demo, which shows an example graph
 
 "Benchmarking-datasets" includes code for generating datasets for benchmarking GNNs, generated FairCAT datasets that mimic real-life datasets, and examples of slurm files used in HPC for training GNNs.
 
+
+## Datasets
 All datasets that are used for benchmarking GNNs can be found on: Skardova, S. (2026). FairCAT-generated datasets for benchmarking fairness-aware GNNs [Data set]. Zenodo. https://doi.org/10.5281/zenodo.18421539.
+
+## Dataset statistics
+To support reproducibility, we show the Statistics table that show properties of the datasets used for benchmarking GNNs.
+### Balancing Experiment
+| Statistic | Balanced | Mild | Strong |
+| :--- | :--- | :--- | :--- |
+| Nodes in s=0 ($n_0$) | 32,768 (50.00%) | 45,875 (70.00%) | 58,982 (90.00%) |
+| Nodes in s=1 ($n_1$) | 32,768 (50.00%) | 19,660 (30.00%) | 6,553 (10.00%) |
+| Total Degree s=0 ($\Theta_0$) | 1,238,184 | 1,748,662 | 2,236,557 |
+| Total Degree s=1 ($\Theta_1$) | 1,237,040 | 749,488 | 241,567 |
+| Avg. Degree s=0 ($\bar{\theta}_0$) | 37.79 | 38.12 | 37.92 |
+| Avg. Degree s=1 ($\bar{\theta}_1$) | 37.75 | 38.12 | 36.86 |
+| Class Dist. s=0, C=0 | 22,876 (69.81%) | 32,176 (70.14%) | 41,377 (70.15%) |
+| Class Dist. s=0, C=1 | 9,892 (30.19%) | 13,699 (29.86%) | 17,605 (29.85%) |
+| Class Dist. s=1, C=0 | 9,806 (29.93%) | 5,906 (30.04%) | 2,023 (30.87%) |
+| Class Dist. s=1, C=1 | 22,962 (70.07%) | 13,754 (69.96%) | 4,530 (69.13%) |
+
+---
+
+### Target Correlation Strength Experiment
+| Statistic | Low | Medium | High |
+| :--- | :--- | :--- | :--- |
+| Nodes in s=0 ($n_0$) | 32,768 (50.00%) | 32,768 (50.00%) | 32,768 (50.00%) |
+| Nodes in s=1 ($n_1$) | 32,768 (50.00%) | 32,768 (50.00%) | 32,768 (50.00%) |
+| Total Degree s=0 ($\Theta_0$) | 1,245,387 | 1,242,854 | 1,248,365 |
+| Total Degree s=1 ($\Theta_1$) | 1,226,607 | 1,261,938 | 1,228,137 |
+| Avg. Degree s=0 ($\bar{\theta}_0$) | 38.01 | 37.93 | 38.10 |
+| Avg. Degree s=1 ($\bar{\theta}_1$) | 37.43 | 38.51 | 37.48 |
+| s=0, C=0 | 22,959 (70.07%) | 22,886 (69.84%) | 22,830 (69.67%) |
+| s=0, C=1 | 9,809 (29.93%) | 9,882 (30.16%) | 9,938 (30.33%) |
+| s=1, C=0 | 9,815 (29.95%) | 9,798 (29.90%) | 9,911 (30.25%) |
+| s=1, C=1 | 22,953 (70.05%) | 22,970 (70.10%) | 22,857 (69.75%) |
+
+---
+
+### Scaling Experiment
+| Statistic | Small | Medium | Large |
+| :--- | :--- | :--- | :--- |
+| Nodes in s=0 ($n_0$) | 512 (50.00%) | 16,384 (50.00%) | 131,072 (50.00%) |
+| Nodes in s=1 ($n_1$) | 512 (50.00%) | 16,384 (50.00%) | 131,072 (50.00%) |
+| Total Degree s=0 ($\Theta_0$) | 31,790 | 1,069,863 | 8,599,263 |
+| Total Degree s=1 ($\Theta_1$) | 31,252 | 1,074,241 | 8,559,167 |
+| Avg. Degree s=0 ($\bar{\theta}_0$) | 62.09 | 65.30 | 65.61 |
+| Avg. Degree s=1 ($\bar{\theta}_1$) | 61.04 | 65.57 | 65.30 |
+| s=0, C=0 | 356 (69.53%) | 11,498 (70.18%) | 91,808 (70.04%) |
+| s=0, C=1 | 156 (30.47%) | 4,886 (29.82%) | 39,264 (29.96%) |
+| s=1, C=0 | 167 (32.62%) | 4,848 (29.59%) | 39,372 (30.04%) |
+| s=1, C=1 | 345 (67.38%) | 11,536 (70.41%) | 91,700 (69.96%) |
+
+---
+
+### Real vs FairCAT-Generated Datasets Comparison Experiments
+| Statistic | Pokec-n (Original) | Pokec-n (FairCAT) | German (Original) | German (FairCAT) |
+| :--- | :--- | :--- | :--- | :--- |
+| Nodes in s=0 ($n_0$) | 4,040 (65.32%) | 4,040 (65.32%) | 690 (69.00%) | 690 (69.00%) |
+| Nodes in s=1 ($n_1$) | 2,145 (34.68%) | 2,145 (34.68%) | 310 (31.00%) | 310 (31.00%) |
+| Total Degree s=0 ($\Theta_0$) | 19,259 | 19,686 | 17,484 | 19,785 |
+| Total Degree s=1 ($\Theta_1$) | 11,383 | 11,636 | 7,486 | 7,537 |
+| Avg. Degree s=0 ($\bar{\theta}_0$) | 4.77 | 4.87 | 25.34 | 28.67 |
+| Avg. Degree s=1 ($\bar{\theta}_1$) | 5.31 | 5.42 | 24.15 | 24.31 |
+| s=0, C=0 | 2,288 (56.63%) | 2,258 (55.89%) | 191 (27.68%) | 198 (28.70%) |
+| s=0, C=1 | 1,752 (43.37%) | 1,782 (44.11%) | 499 (72.32%) | 492 (71.30%) |
+| s=1, C=0 | 1,144 (53.33%) | 1,129 (52.63%) | 109 (35.16%) | 118 (38.06%) |
+| s=1, C=1 | 1,001 (46.67%) | 1,016 (47.37%) | 201 (64.84%) | 192 (61.94%) |
