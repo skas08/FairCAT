@@ -21,13 +21,40 @@ FairCAT allows users to explicitly control separate degree distributions per bin
 ## Reproduction of experiments
 The repository includes the FairCAT model and demo, which shows an example graph generation. 
 
+### Experiments used for testing FaircAT
+
 "Experiments" folder includes code for the experiments. The aim of these experiments is to assess the ability of FairCAT to reproduce user-specified degree distributions and attribute correlations, inspect how user inputs affect generation and output, evaluate scalability, and analyze reproducibility of real-world graphs.
+
+- "topology_validation.ipynb": includes most code to experiments in Chapter 5. First, it measures Community-related statistics (Section 5.6.2). Second, it shows MAPE experiments (5.2 Target degrees) for various sensitive group balance and degree distribution types. Third, it includes code for the Impact of User-Specified Inputs (Section 5.4) that investigates how attribute distribution and maximum degree constraint affect time, memory (and MAPE). Lastly, it includes an example scaling experiment, which was done on HPC instead of local jupyter notebook (Section 5.5).
+- "scaling_faircat.py" was run on HPC to test scaling of FairCAT (Section 5.5).
+- "stats_utils.py" includes functions definitions that are used in Section 5.6.2. It consists of inter- and intra-connection density calculation, the size of LLC calculation, and characteristic path length.
+- "scaling_norm.py" and "scaling_bern.py" are used for Section 5.3 Target Correlation section. They test normal and Bernoulli distributions, respectivelly.
+- "scaling_max_deg.py" measures the impact of the maximum degree contraing (Section 5.4.2)
+- "Pokec-dataset.ipynb" and "German-credit.ipynb" first analyze characteristics of the real-world Pokec_n and German Credit datasets, respectivelly. They measure the connectivity statistics of original and FairCAT-generated graphs reproducing the original ones. Later, it compares degree distribution and correlations between original and generated graphs.
+
+### Benchmarking GNNs
 
 "Benchmarking-datasets" includes code for generating datasets for benchmarking GNNs, generated FairCAT datasets that mimic real-life datasets, and examples of slurm files used in HPC for training GNNs.
 
+The user can use the dataset by first generating or downloading the datasets that want the GNN to be trained on. They must clone FairGraphBase and paste the datasets in the data folder of FairGraphBase repo. Then they can run FairGraphBase on HPC by running the slurm files that are provided here. If users want another setting, for example they want FairGNN SAGE model on faircat_balancing_strong_imbalance, they must replace the terms in slurm file: FairGNN instead of Vanilla, SAGE instead of GCN, and strong_imbalance instead of balanced.
+
+The FairGraphBase repository: Sasaki, Y. (2025). FairGraphBase. GitHub. https://github.com/yuya-s/MUSUBI-FairGraphBase.
+
+- "balancing_tests" folder includes "balancing-save.py" which was used for generating datasets used for balance comparisons in Section 6.2. The other file, "faircat_balancing_balanced_vanilla_gcn.slurm" is a slurm file that is used for running FairGraphBase on balancing datasets. The other slurm files were a combination of vanilla, fairgnn and nifty GNNs and gcn and sage encoders. The only changes in the rest of slurm files were the differences in fairness-aware GNN, encoder setting, and dataset setting. The balancing datasets are called faircat_balancing_balanced, faircat_balancing_mild_imbalance, and
+  faircat_balancing_strong_imbalance.
+- "correlations_tests" refer to Section 6.3 Impact of strength of correlations between sensitive and nonsensitive
+  attributes on downstream GNN learning. It includes a code for generating datasets "faircat_correlations_low", "faircat_correlations_medium", and "faircat_correlations_high". Again, it includes the slurm file for Vanilla GCN model that is trained on high correlations graph.
+- "scaling_tests" refer to code used for Section 6.4 Impact of increasing graph size on downstream GNN learning. The generated graphs are increasing in size: Small (number of nodes=2^15), Medium (nodes=2^20), Large (nodes=2^23; called 2^25 due to an error). Again, there is a slurm file for Vanilla GCN model for small graph.
+- "pokec_n_faircat" is used for Pokec-n reproduction.
+- "german_faircat" is used for German Credit reproduction.
 
 ## Datasets
-All datasets that are used for benchmarking GNNs can be found on: Skardova, S. (2026). FairCAT-generated datasets for benchmarking fairness-aware GNNs [Data set]. Zenodo. https://doi.org/10.5281/zenodo.18421539.
+
+FairCAT-generated datasets that are used for benchmarking GNNs can be found on: Skardova, S. (2026). FairCAT-generated datasets for benchmarking fairness-aware GNNs [Data set]. Zenodo. https://doi.org/10.5281/zenodo.18421539.
+
+Real-life Pokec-n dataset is available here: https://github.com/yuya-s/MUSUBI-FairGraphBase/tree/main/data/pokec_n
+
+Real-life German Credit is available here: https://github.com/chirag-agarwall/nifty/tree/main/dataset/german
 
 ## Dataset statistics
 To support reproducibility, we show the Statistics table that show properties of the datasets used for benchmarking GNNs.
