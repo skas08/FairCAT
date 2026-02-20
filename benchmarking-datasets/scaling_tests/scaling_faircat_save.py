@@ -64,7 +64,7 @@ for z_0, z_1 in z_pairs:
     start = time.time()
 
     # Run FairCAT
-    S, X, Label, theta, sorted_attr_group = faircat.faircat(
+    A, X, Label, theta, sorted_attr_group = faircat.faircat(
         n_0, n_1, deg_0, deg_1,
         k, d, max_deg_0, max_deg_1,
         dist_type_0, dist_type_1,
@@ -81,7 +81,7 @@ for z_0, z_1 in z_pairs:
     end = time.time()
     runtime = end - start
 
-    adj = S.tocoo() if sp.issparse(S) else sp.coo_matrix(S)
+    adj = A.tocoo() if sp.issparse(A) else sp.coo_matrix(A)
 
     mask = adj.row < adj.col  # keep one direction
     edges = np.vstack((adj.row[mask], adj.col[mask])).astype(np.int64)

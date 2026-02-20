@@ -72,7 +72,7 @@ for c in corr_targets_lengths:
     start = time.time()
 
     # faircat
-    S, X, Label = faircat.faircat(
+    A, X, Label = faircat.faircat(
         n_0, n_1, deg_0, deg_1,
         k, d, max_deg_0, max_deg_1,
         dist_type_0, dist_type_1,
@@ -95,6 +95,6 @@ for c in corr_targets_lengths:
 
 
 # cleanup
-    del S, X, Label
+    del A, X, Label
     del corr_vals, corr_targets
     gc.collect()

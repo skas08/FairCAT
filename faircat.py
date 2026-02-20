@@ -96,19 +96,19 @@ def prepare_theta_and_indices(theta_0, theta_1):
 
 
 
-def count_edges(S):
+def count_edges(A):
     """
     Counts the edges
 
     Parameters
-    - S: adjacency matrix (n x n)
+    - A: adjacency matrix (n x n)
 
     Returns
     - total number of edges in the graph
     """
-    n = S.shape[0]
+    n = A.shape[0]
     node_degree = np.zeros(n)
-    nnz = S.nonzero()
+    nnz = A.nonzero()
     for i in range(len(nnz[0])):
         if nnz[0][i] < nnz[1][i]:
             node_degree[nnz[0][i]] += 1
@@ -234,7 +234,7 @@ def edge_construction(n, U, k, U_prime, step, theta, r):
     """
     U_ = copy.deepcopy(U)
     
-    S = sparse.dok_matrix((n,n))
+    A = sparse.dok_matrix((n,n))
     degree_list = np.zeros(n)
     count_list = []
     print_count = 1
@@ -250,11 +250,11 @@ def edge_construction(n, U, k, U_prime, step, theta, r):
                         ng_list.add(j)
                         break
                 if degree_list[j] < theta[j] and i!=j:
-                    S[i,j] = 1;S[j,i] = 1
+                    A[i,j] = 1;A[j,i] = 1
                     degree_list[i]+=1;degree_list[j]+=1
             count += 1 
         count_list.append(count)
-    return S, count_list
+    return A, count_list
 
 def ITS_U_prime(n,k,U_prime,step):
     """
@@ -422,8 +422,8 @@ def _phi_feasible_interval(pi, p):
     Gives feasible interval of phi values
 
     parameters:
-    - pi: P(S=1)
-    - p: P(X=1)
+    - pi: P(s=1)
+    - p: P(x=1)
 
     returns:
     - (lo, hi): feasible interval of phi values
@@ -516,10 +516,10 @@ def adjust_feature_to_corr_phi(x_bin, s_bin, phi_target, probs_col):
     if set(np.unique(xb)) - {0,1} or set(np.unique(sb)) - {0,1}:
         raise ValueError("Binary path requires {0,1} inputs.")
 
-    pi = sb.mean()        # pi = P(S=1)
-    p  = xb.mean()        # p = P(X=1)
+    pi = sb.mean()        # pi = P(s=1)
+    p  = xb.mean()        # p = P(x=1)
     if not (0.0 < pi < 1.0):
-        return xb  # no variation in s → nothing to do
+        return xb  # nothing to do due to s having no variation
 
     # Feasibility of requested phi
     lo_phi, hi_phi = _phi_feasible_interval(pi, p)
@@ -530,7 +530,7 @@ def adjust_feature_to_corr_phi(x_bin, s_bin, phi_target, probs_col):
         phi_target = hi_phi
         print(f"Warning: Target phi too high; adjusted to feasible maximum {hi_phi:.3f}.")
 
-    # Map target phi → group gap delta = p1 - p0
+    # calculate delta (= p1 - p0)
     # delta = phi * sqrt(p(1-p)) / sqrt(pi(1-pi))
     Delta = phi_target * np.sqrt(max(p*(1.0 - p), 1e-18)) / np.sqrt(pi * (1.0 - pi))
 
@@ -539,7 +539,7 @@ def adjust_feature_to_corr_phi(x_bin, s_bin, phi_target, probs_col):
     p1 = p + (1.0 - pi) * Delta
 
 
-    # Flip minimal bits within each s-group to hit target counts
+    # Flip minimal number of 0/1s within each s group to hit target counts
     x_new = xb.copy()
     g0 = np.flatnonzero(sb == 0)
     g1 = np.flatnonzero(sb == 1)
@@ -637,9 +637,9 @@ def faircat(n_0, n_1,deg_0, deg_1,k,d,max_deg_0, max_deg_1,dist_type_0, dist_typ
     U_prime_CDF = ITS_U_prime(n,k,U_prime,step)
 
     # Edge generation
-    S_gen, count_list = edge_construction(n, U, k, U_prime_CDF, step, theta, r)
+    A_gen, count_list = edge_construction(n, U, k, U_prime_CDF, step, theta, r)
         
-    print("number of generated edges : " + str(count_edges(S_gen)))
+    print("number of generated edges : " + str(count_edges(A_gen)))
 
 
 
@@ -661,17 +661,17 @@ def faircat(n_0, n_1,deg_0, deg_1,k,d,max_deg_0, max_deg_1,dist_type_0, dist_typ
                 attr_type=att_type, X_keep=X_keep  
             )
     if MAPE==True:
-        return S_gen,X,C, theta, sorted_attr_group
+        return A_gen,X,C, theta, sorted_attr_group
     else:
-        return S_gen,X,C
+        return A_gen,X,C
 
 
 ######### Class reproduction function ########################
 # taken from GenCAT
-def class_reproduction(k,S,Label):
+def class_reproduction(k,A,Label):
     # extract class preference matrix from given graph
     pref = np.zeros((len(Label),k))
-    nnz = S.nonzero()
+    nnz = A.nonzero()
     for i in range(len(nnz[0])):
         if nnz[0][i] < nnz[1][i]:
             pref[nnz[0][i]][Label[nnz[1][i]]] += 1

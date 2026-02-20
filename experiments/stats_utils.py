@@ -1,12 +1,12 @@
 import numpy as np
 from scipy.sparse import csgraph
 
-def inter_intra_counts(S, groups):
+def inter_intra_counts(A, groups):
     groups = np.asarray(groups)
     intra = {g: 0 for g in np.unique(groups)}
     inter = {g: 0 for g in np.unique(groups)}
 
-    rows, cols = S.nonzero()
+    rows, cols = A.nonzero()
     for r, c in zip(rows, cols):
         if r >= c:  # upper triangle only
             continue

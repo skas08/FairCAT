@@ -67,7 +67,7 @@ for z_0, z_1 in z_pairs:
     start = time.time()
 
     # faircat run
-    S, X, Label= faircat.faircat(
+    A, X, Label= faircat.faircat(
         n_0, n_1, deg_0, deg_1,
         k, d, max_deg_0, max_deg_1,
         dist_type_0, dist_type_1,

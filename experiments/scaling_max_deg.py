@@ -72,7 +72,7 @@ for mult in max_deg_multiplier:
     start = time.time()
 
     # faircat run
-    S, X, Label, theta, sorted_attr_group = faircat.faircat(
+    A, X, Label, theta, sorted_attr_group = faircat.faircat(
         n_0, n_1, deg_0, deg_1,
         k, d, max_deg_0, max_deg_1,
         dist_type_0, dist_type_1,
@@ -83,14 +83,14 @@ for mult in max_deg_multiplier:
     )
 
     # compute mape
-    S = S.tocsr()
-    S.setdiag(0)
-    if hasattr(S, "eliminate_zeros"):
-        S.eliminate_zeros()
-    if S.nnz:
-        S.data[:] = 1
+    A = A.tocsr()
+    A.setdiag(0)
+    if hasattr(A, "eliminate_zeros"):
+        A.eliminate_zeros()
+    if A.nnz:
+        A.data[:] = 1
 
-    theta_actual = np.array(S.sum(axis=1)).ravel().astype(float)
+    theta_actual = np.array(A.sum(axis=1)).ravel().astype(float)
     theta_target = np.asarray(theta, float)
     theta_target = np.clip(theta_target, 1e-12, None)
 
@@ -106,7 +106,7 @@ for mult in max_deg_multiplier:
     mem_after = process.memory_info().rss / (1024**3)  # GB
     mem_used = max(mem_after - mem_before, 0.0)
 
-    del S, X, Label, theta, sorted_attr_group
+    del A, X, Label, theta, sorted_attr_group
     del theta_actual, theta_target, groups
     gc.collect()
 

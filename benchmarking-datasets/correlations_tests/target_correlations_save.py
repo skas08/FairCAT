@@ -66,7 +66,7 @@ for z_0, z_1 in z_pairs:
 
         corr_targets = corr
         # Run FairCAT
-        S, X, Label, theta, sorted_attr_group = faircat.faircat(
+        A, X, Label, theta, sorted_attr_group = faircat.faircat(
             n_0, n_1, deg_0, deg_1,
             k, d, max_deg_0, max_deg_1,
             dist_type_0, dist_type_1,
@@ -77,14 +77,14 @@ for z_0, z_1 in z_pairs:
         )
 
         # Compute mape
-        S = S.tocsr()
-        S.setdiag(0)
-        if hasattr(S, "eliminate_zeros"):
-            S.eliminate_zeros()
-        if S.nnz:
-            S.data[:] = 1
+        A = A.tocsr()
+        A.setdiag(0)
+        if hasattr(A, "eliminate_zeros"):
+            A.eliminate_zeros()
+        if A.nnz:
+            A.data[:] = 1
 
-        theta_actual = np.array(S.sum(axis=1)).ravel().astype(float)
+        theta_actual = np.array(A.sum(axis=1)).ravel().astype(float)
         theta_target = np.asarray(theta, float)
         theta_target = np.clip(theta_target, 1e-12, None)
         mape_total = np.mean(np.abs(theta_actual - theta_target) / theta_target)
@@ -108,7 +108,7 @@ for z_0, z_1 in z_pairs:
         end = time.time()
         runtime = end - start
 
-        adj = S.tocoo() if sp.issparse(S) else sp.coo_matrix(S)
+        adj = A.tocoo() if sp.issparse(A) else sp.coo_matrix(A)
 
 
         mask = adj.row < adj.col  # keep one direction
