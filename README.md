@@ -41,17 +41,17 @@ The user can use the dataset by first generating or downloading the datasets tha
 The FairGraphBase repository: Sasaki, Y. (2025). FairGraphBase. GitHub. https://github.com/yuya-s/MUSUBI-FairGraphBase.
 
 - "FairGraphBase_modified" folder includes a dataset file that was modified to accept FairCAT-generated graphs. The user who wants FairGraphBase to load a FairCAT-generated graph should replace MUSUBI-FairGraphBase/utils/dataset with this file.
-- "balancing_tests" folder includes "balancing-save.py" which was used for generating datasets used for balance comparisons in Section 6.2. The other file, "faircat_balancing_balanced_vanilla_gcn.slurm" is a slurm file that is used for running FairGraphBase on balancing datasets. The other slurm files were a combination of vanilla, fairgnn and nifty GNNs and gcn and sage encoders. The only changes in the rest of slurm files were the differences in fairness-aware GNN, encoder setting, and dataset setting. The balancing datasets are called faircat_balancing_balanced, faircat_balancing_mild_imbalance, and
+- "balancing_tests" folder includes "balancing-save.py" which was used for generating datasets used for balance comparisons in Section 6.2. The other file, "faircat_balancing_balanced_vanilla_gcn.slurm" is a Slurm file that is used for running FairGraphBase on balancing datasets. The other slurm files were a combination of vanilla, fairgnn and nifty GNNs and gcn and sage encoders. The only changes in the rest of Slurm files were the differences in fairness-aware GNN, encoder setting, and dataset setting. The balancing datasets are called faircat_balancing_balanced, faircat_balancing_mild_imbalance, and
   faircat_balancing_strong_imbalance.
 - "correlations_tests" refer to Section 6.3 Impact of strength of correlations between sensitive and nonsensitive
-  attributes on downstream GNN learning. It includes a code for generating datasets "faircat_correlations_low", "faircat_correlations_medium", and "faircat_correlations_high". Again, it includes the slurm file for Vanilla GCN model that is trained on high correlations graph.
-- "scaling_tests" refer to code used for Section 6.4 Impact of increasing graph size on downstream GNN learning. The generated graphs are increasing in size: Small (number of nodes=2^15), Medium (nodes=2^20), Large (nodes=2^23; called 2^25 due to an error). Again, there is a slurm file for Vanilla GCN model for small graph.
+  attributes on downstream GNN learning. It includes a code for generating datasets "faircat_correlations_low", "faircat_correlations_medium", and "faircat_correlations_high". Again, it includes the Slurm file for Vanilla GCN model that is trained on high correlations graph.
+- "scaling_tests" refer to code used for Section 6.4 Impact of increasing graph size on downstream GNN learning. The generated graphs are increasing in size: Small (number of nodes=2^15), Medium (2^20), Large (2^23). Again, there is a Slurm file for Vanilla GCN model for small graph.
 - "pokec_n_faircat" is used for Pokec-n reproduction.
 - "german_faircat" is used for German Credit reproduction.
 
 ## Datasets
 
-FairCAT-generated datasets that are used for benchmarking GNNs can be found on: Skardova, S. (2026). FairCAT-generated datasets for benchmarking fairness-aware GNNs [Data set]. Zenodo. https://doi.org/10.5281/zenodo.18421539.
+FairCAT-generated datasets that are used for benchmarking GNNs can be found on: Skardova, S. (2026). FairCAT-generated datasets for benchmarking fairness-aware GNNs [Data set]. Zenodo. https://doi.org/10.5281/zenodo.18716538.
 
 Real-life Pokec-n dataset is available here: https://github.com/yuya-s/MUSUBI-FairGraphBase/tree/main/data/pokec_n
 
