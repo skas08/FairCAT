@@ -36,8 +36,9 @@ Pcg = np.array([[0.7,0.3], [0.3,0.7]])
 
 
 # Define exponent pairs for large-scale test
-z_pairs = [(20,20)]
-#z_pairs = [(23,23)]
+z_pairs = [(15,15)] #small 
+# z_pairs = [(20,20)] #medium
+#z_pairs = [(23,23)] # large 
 results = []
 
 process = psutil.Process() 
@@ -86,7 +87,7 @@ for z_0, z_1 in z_pairs:
     mask = adj.row < adj.col  # keep one direction
     edges = np.vstack((adj.row[mask], adj.col[mask])).astype(np.int64)
 
-    out_dir = r"data_scaling\faircat_scaling_20"
+    out_dir = r"data_scaling\faircat_scaling_small"
     os.makedirs(out_dir, exist_ok=True)
 
     np.save(os.path.join(out_dir, "edges.npy"), edges)
