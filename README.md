@@ -40,6 +40,7 @@ The user can use the dataset by first generating or downloading the datasets tha
 
 The FairGraphBase repository: Sasaki, Y. (2025). FairGraphBase. GitHub. https://github.com/yuya-s/MUSUBI-FairGraphBase.
 
+- "FairGraphBase_modified" folder includes a dataset file that was modified to accept FairCAT-generated graphs. The user who wants FairGraphBase to load a FairCAT-generated graph should replace MUSUBI-FairGraphBase/utils/dataset with this file.
 - "balancing_tests" folder includes "balancing-save.py" which was used for generating datasets used for balance comparisons in Section 6.2. The other file, "faircat_balancing_balanced_vanilla_gcn.slurm" is a slurm file that is used for running FairGraphBase on balancing datasets. The other slurm files were a combination of vanilla, fairgnn and nifty GNNs and gcn and sage encoders. The only changes in the rest of slurm files were the differences in fairness-aware GNN, encoder setting, and dataset setting. The balancing datasets are called faircat_balancing_balanced, faircat_balancing_mild_imbalance, and
   faircat_balancing_strong_imbalance.
 - "correlations_tests" refer to Section 6.3 Impact of strength of correlations between sensitive and nonsensitive
